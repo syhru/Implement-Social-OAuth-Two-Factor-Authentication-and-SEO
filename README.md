@@ -152,6 +152,7 @@ app/
 - **Login:** Via Google OAuth only
 - **2FA:** Required (OTP via email)
 
+
 ---
 
 ## 📝 License
