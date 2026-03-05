@@ -87,7 +87,7 @@ php artisan migrate --seed
 
 This creates:
 
-- 1 Admin user (`muhamadarul746@gmail.com`)
+- 1 Admin user
 - 5 Categories (Teknologi, Programming, Cloud Computing, AI, Cyber Security)
 - 10 Tags (Laravel, Python, AWS, Docker, etc.)
 
