@@ -149,7 +149,6 @@ app/
 
 ## 🧪 Admin Access
 
-- **Email:** `muhamadarul746@gmail.com`
 - **Login:** Via Google OAuth only
 - **2FA:** Required (OTP via email)
 
