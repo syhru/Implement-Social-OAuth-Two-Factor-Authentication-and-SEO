@@ -6,12 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Exception;
-use Illuminate\Support\Str;
+
+use App\Services\OtpService;
 
 class SocialAuthController extends Controller
 {
+    protected $otpService;
+
+    public function __construct(OtpService $otpService)
+    {
+        $this->otpService = $otpService;
+    }
+
     public function redirect(string $provider)
     {
         return Socialite::driver($provider)->redirect();
@@ -27,23 +36,19 @@ class SocialAuthController extends Controller
                 ->first();
 
             if ($socialAccount) {
-                // Account exists, login user
                 $user = $socialAccount->user;
             } else {
-                // Check if user with same email exists
                 $user = User::where('email', $socialUser->getEmail())->first();
 
                 if (!$user) {
-                    // Create new user
                     $user = User::create([
                         'name' => $socialUser->getName() ?? $socialUser->getNickname(),
                         'email' => $socialUser->getEmail(),
-                        'password' => null, // Password can be null for social logins
+                        'password' => null,
                         'two_factor_enabled' => false,
                     ]);
                 }
 
-                // Create social account
                 $user->socialAccounts()->create([
                     'provider' => $provider,
                     'provider_id' => $socialUser->getId(),
@@ -54,11 +59,16 @@ class SocialAuthController extends Controller
             Auth::login($user);
 
             if ($user->two_factor_enabled) {
+                $this->otpService->generate($user);
                 return redirect()->route('otp.verify.form');
             }
 
             return redirect()->intended('/dashboard');
         } catch (Exception $e) {
+            Log::error('Social Auth Error: ' . $e->getMessage(), [
+                'provider' => $provider,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return redirect('/login')->withErrors(['error' => 'Failed to authenticate using ' . ucfirst($provider)]);
         }
     }

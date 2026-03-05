@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             '2fa' => \App\Http\Middleware\EnsureTwoFactorVerified::class,
+            'admin' => \App\Http\Middleware\IsAdminUser::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

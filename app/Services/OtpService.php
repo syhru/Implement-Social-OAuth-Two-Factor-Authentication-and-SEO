@@ -4,17 +4,22 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Notifications\SendOtpCode;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
 class OtpService
 {
-    public function generate(User $user, string $type = '2fa'): void
+    /**
+     * Generate an OTP code, save it to DB, and attempt to send via email.
+     * Returns the generated code so callers can handle SMTP failures gracefully.
+     */
+    public function generate(User $user, string $type = '2fa'): string
     {
         // Generate a 6-digit code
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         // Calculate expiration from .env or default to 60 minutes
-        $expiresMinutes = config('auth.otp_expires_in', 60);
+        $expiresMinutes = (int) env('OTP_EXPIRY_MINUTES', 60);
 
         $user->otpVerifications()->create([
             'code' => $code,
@@ -23,7 +28,14 @@ class OtpService
             'is_used' => false,
         ]);
 
-        $user->notify(new SendOtpCode($code));
+        // Attempt to send email — if SMTP is blocked, log a warning but don't crash
+        try {
+            $user->notify(new SendOtpCode($code));
+        } catch (Exception $e) {
+            Log::warning('OTP email delivery failed: ' . $e->getMessage());
+        }
+
+        return $code;
     }
 
     public function verify(User $user, string $code, string $type = '2fa'): bool

@@ -18,8 +18,6 @@ class OtpController extends Controller
 
     public function showVerifyForm()
     {
-        // Optional: you might want to automatically send an OTP if they just arrived
-        // For security, checking if they just logged in might be wise before generating.
         return view('auth.otp-verify');
     }
 
